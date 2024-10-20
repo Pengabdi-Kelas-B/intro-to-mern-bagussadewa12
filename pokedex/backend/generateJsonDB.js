@@ -1,5 +1,6 @@
 const fs = require('fs');
 const axios = require('axios');
+const { types } = require('util');
 
 async function generateJsonDB() {
   // TODO: fetch data pokemon api dan buatlah JSON data sesuai dengan requirement.
@@ -7,34 +8,32 @@ async function generateJsonDB() {
   // dan ketika akses url http://localhost:3000/pokemon akan muncul seluruh data
   // pokemon yang telah kalian parsing dari public api pokemon
   const pokemonApiURL = 'https://pokeapi.co/api/v2/pokemon?limit=100';
-
+  // fetch API
   try {
     const response = await axios.get(pokemonApiURL);
-    const listPokemon = response.data.results;
 
-    const pokemonData = [];
+    const resultPokemon = [];
 
-    for (const pokemon of listPokemon) {
-      const detailPokemon = await axios.get(pokemon.url);
-      const types = detailPokemon.data.types.map((typeInfo) => typeInfo.type.name);
+    for (const pokemon of response.data.results) {
+      const pokemonDetailResponse = await axios.get(pokemonApiURL);
 
-      const infoPokemon = {
-        name: detailPokemon.data.name,
-        types: types,
-        image: detailPokemon.data.sprites.front_default,
-      };
-      pokemonData.push(infoPokemon);
+      resultPokemon.push({
+        id: pokemonDetailResponse.data.id,
+        name: pokemonDetailResponse.data.name,
+        types: pokemonDetailResponse.data.types.map((e) => e.type.name),
+      });
     }
-    console.log(pokemonData);
 
-    const data = {
-      pokemon: pokemonData,
+    // write data ke db.json
+    const sample = {
+      pokemon: [],
     };
 
-    fs.writeFileSync('db.json', JSON.stringify(data, null, 4));
+    sample.pokemon = resultPokemon;
+
+    fs.writeFileSync('db.json', JSON.stringify(sample, null, 2));
   } catch {
     console.log('gambar tidak berhasil di simpan');
   }
 }
-
 generateJsonDB();
